@@ -10,6 +10,8 @@ import {
   Legend
 } from 'chart.js';
 
+import { unemploymentData1929_2023 } from './data/unemployment1929-2023';
+
 // Đăng ký các components cần thiết
 ChartJS.register(
   CategoryScale,
@@ -22,13 +24,19 @@ ChartJS.register(
 );
 
 const UnemploymentChart = () => {
-  // Data từ hình ảnh
+   // Data từ https://www.investopedia.com/historical-us-unemployment-rate-by-year-7495494
+  const filteredData = unemploymentData1929_2023.filter(
+    item => item.year >= 1929 && item.year <= 2023
+  );
+
+  console.log(filteredData);
+
   const data = {
-    labels: ['1929', '1930', '1931', '1932', '1933', '1934', '1935', '1936', '1937', '1938', '1939', '1940', '1941', '1942'],
+    labels: filteredData.map(item => item.year.toString()),
     datasets: [
       {
         label: 'Tỷ lệ thất nghiệp (%)',
-        data: [3.2, 8.7, 15.9, 23.6, 24.9, 21.7, 20.1, 16.9, 14.3, 19.0, 17.2, 14.6, 9.9, 4.7],
+        data: filteredData.map(item => item.rate),
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.5)',
         tension: 0.3,
@@ -44,8 +52,20 @@ const UnemploymentChart = () => {
       },
       title: {
         display: true,
-        text: 'Tỷ lệ thất nghiệp tại Mỹ (1929-1942)',
+        text: 'Tỷ lệ thất nghiệp tại Mỹ',
       },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const dataIndex = context.dataIndex;
+            const event = filteredData[dataIndex].event;
+            return [
+              `Tỷ lệ: ${context.raw}%`,
+              `Sự kiện: ${event}`
+            ];
+          }
+        }
+      }
     },
     scales: {
       y: {
@@ -68,6 +88,26 @@ const UnemploymentChart = () => {
     <div className="w-full max-w-4xl p-4 bg-white rounded-lg shadow">
       <Line options={options} data={data} />
       
+      <div className="mt-4 overflow-auto max-h-60">
+        <table className="min-w-full">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="px-4 py-2">Năm</th>
+              <th className="px-4 py-2">Tỷ lệ (%)</th>
+              <th className="px-4 py-2">Sự kiện</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredData.map((item) => (
+              <tr key={item.year} className="border-b hover:bg-gray-50">
+                <td className="px-4 py-2">{item.year}</td>
+                <td className="px-4 py-2">{item.rate}%</td>
+                <td className="px-4 py-2">{item.event}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -1,10 +1,9 @@
-export interface Message {
-    id: string;
-    content: string;
-    role: 'user' | 'assistant';
-    timestamp: Date;
-  }
-  
-  export interface ChatHistory {
-    messages: Message[];
-  }
+export type Message = {
+  role: "assistant" | "user" | "system";
+  content: string;
+};
+
+export interface ChatHistory {
+  messages: Message[];
+}
+
