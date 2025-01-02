@@ -99,10 +99,6 @@ const ChatPage = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("messages eeeeee", messages);
-  }, [messages]);
-
   return (
     <div className="h-screen flex flex-col">
       <Header />
