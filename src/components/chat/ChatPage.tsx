@@ -1,20 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Message } from "../../types/chat";
 import ChatHistory from "./components/ChatHistory";
 import ChatInput from "./components/ChatInput";
 import Header from "../header";
-
-// Định nghĩa type cho response
-type LLMResponse = {
-  model: string;
-  created_at: string;
-  message: {
-    content: string;
-    role: string;
-  };
-  done: boolean;
-  done_reason: string;
-};
 
 const ChatPage = () => {
   // tin nhắn lưu thành mảng để gửi cho /api/chat
@@ -45,20 +33,24 @@ const ChatPage = () => {
         },
         body: JSON.stringify({
           model: "codellama",
-          messages: [...messages, userMessage], // lấy tin nhắn hiện tại nhét vào đoạn tin nhắn cũ
-          stream: true, // Tao muốn từng từ được gửi đến UI
+          messages: [...messages, userMessage],
+          stream: true,
         }),
       });
 
-      const reader = await response.body?.getReader();
+      if (!response.body) {
+        throw new Error("Response body is null");
+      }
 
-
+      const reader = response.body.getReader();
       let tempCurrentResponse = "";
-      while (true) {
-        const { value, done } = await reader?.read();
 
+      while (true) {
+        // value: Uint8Array (binary data, value là dữ liệu nguyên thuỷ), done: boolean
+        const { value, done } = await reader.read();
         if (done) break;
-        const chunk = new TextDecoder().decode(value);
+
+        const chunk = new TextDecoder().decode(value); // TextDecoder chuyển Uint8Array (binary data) thành string
 
         // có những json cách nhau bằng \n
         // nên cần tách ra
@@ -67,11 +59,9 @@ const ChatPage = () => {
         for (const chunk of chunks) {
           if (chunk.trim() === "") continue;
 
-          const eachChunk = JSON.parse(chunk);
+          const eachChunk = JSON.parse(chunk); // cuối cùng chuyển string thành object
 
-          // lưu tạm value của currentResponse tại biến này
           tempCurrentResponse += eachChunk.message.content;
-
           setCurrentResponse(tempCurrentResponse);
 
           console.log("chunk line by line received", eachChunk.message.content);
@@ -82,7 +72,6 @@ const ChatPage = () => {
 
           if (eachChunk.done) {
             setIsGenerating(false);
-
             setMessages((prev) => [
               ...prev,
               {
@@ -99,13 +88,10 @@ const ChatPage = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("messages eeeeee", messages);
-  }, [messages]);
-
   return (
     <div className="h-screen flex flex-col">
       <Header />
+
       <main className="flex-1 overflow-auto">
         <ChatHistory
           messages={messages}
