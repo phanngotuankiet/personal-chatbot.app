@@ -27,3 +27,4 @@ node_modules
 
 # config
 constants.ts
+package-lock.json

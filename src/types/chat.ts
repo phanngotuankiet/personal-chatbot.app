@@ -7,3 +7,7 @@ export interface ChatHistory {
   messages: Message[];
 }
 
+// chat mode
+export type ChatMode = 'general' | 'code' | 'math';
+
+

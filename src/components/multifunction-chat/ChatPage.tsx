@@ -1,29 +1,25 @@
 import { useState } from "react";
-import { Message } from "../../types/chat";
-import ChatHistory from "./components/ChatHistory";
-import ChatInput from "./components/ChatInput";
+import MultiFunctionChatHistory from "./components/ChatHistory";
+import MultiFunctionChatInput from "./components/ChatInput";
 import Header from "../header";
+import { ChatMode, Message } from "../../types/chat";
 
-const ChatPage = () => {
-  // tin nhắn lưu thành mảng để gửi cho /api/chat
+const MultiFunctionChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-
-  // response hiện tại
   const [currentResponse, setCurrentResponse] = useState<string>("");
-
-  // khi done = true thì setIsGenerating = false, khi nhận response thì true
   const [isGenerating, setIsGenerating] = useState(false);
+  const [mode, setMode] = useState<ChatMode>('general');
 
   const handleSendMessage = async (content: string) => {
-    // Tạo message của user
+    // Tạo message của user với mode
     const userMessage: Message = {
-      content: content,
+      content,
       role: "user",
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setIsGenerating(true); // khi nhận response thì true
-    setCurrentResponse(""); // Reset current response
+    setMessages(prev => [...prev, userMessage]);
+    setIsGenerating(true);
+    setCurrentResponse("");
 
     try {
       const response = await fetch("http://localhost:11434/api/chat", {
@@ -33,12 +29,14 @@ const ChatPage = () => {
         },
         body: JSON.stringify({
           model: "codellama",
-          messages: [...messages, userMessage],
+          messages: [
+            { role: "system", content: messages },
+            ...messages,
+            userMessage
+          ],
           stream: true,
-          options: {        
-            temperature: 0.5,
+          options: {
             top_p: 0.9,
-            max_tokens: 10,
           }
         }),
       });
@@ -51,64 +49,62 @@ const ChatPage = () => {
       let tempCurrentResponse = "";
 
       while (true) {
-        // value: Uint8Array (binary data, value là dữ liệu nguyên thuỷ), done: boolean
         const { value, done } = await reader.read();
         if (done) break;
 
-        const chunk = new TextDecoder().decode(value); // TextDecoder chuyển Uint8Array (binary data) thành string
-
-        // có những json cách nhau bằng \n
-        // nên cần tách ra
+        const chunk = new TextDecoder().decode(value);
         const chunks = chunk.split("\n");
 
         for (const chunk of chunks) {
           if (chunk.trim() === "") continue;
 
-          const eachChunk = JSON.parse(chunk); // cuối cùng chuyển string thành object
-
+          const eachChunk = JSON.parse(chunk);
           tempCurrentResponse += eachChunk.message.content;
           setCurrentResponse(tempCurrentResponse);
 
-          console.log("chunk line by line received", eachChunk.message.content);
-
-          console.log("doneee", eachChunk.done);
-
-          setCurrentResponse((prev) => prev + eachChunk.message.content);
-
           if (eachChunk.done) {
             setIsGenerating(false);
-            setMessages((prev) => [
+            setMessages(prev => [
               ...prev,
               {
                 content: tempCurrentResponse,
                 role: "assistant",
+                // mode: selectedMode
               },
             ]);
           }
         }
       }
     } catch (error) {
-      console.error("Error details:", error);
+      console.error("Error:", error);
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-purple-50 via-white to-purple-50">
       <Header />
+      
+      {/* Mode Indicator */}
+      <div className="bg-purple-100 px-4 py-2 text-center text-purple-700">
+        Current Mode: {mode.charAt(0).toUpperCase() + mode.slice(1)}
+      </div>
 
       <main className="flex-1 overflow-auto">
-        <ChatHistory
+        <MultiFunctionChatHistory
           messages={messages}
           currentResponse={currentResponse}
           isGenerating={isGenerating}
         />
       </main>
 
-      {/* nơi nhập tin nhắn */}
-      <ChatInput onSendMessage={handleSendMessage} />
+      <MultiFunctionChatInput 
+        onSendMessage={handleSendMessage}
+        currentMode={mode}
+        onModeChange={setMode}
+      />
     </div>
   );
 };
 
-export default ChatPage;
+export default MultiFunctionChatPage; 
