@@ -35,6 +35,11 @@ const ChatPage = () => {
           model: "codellama",
           messages: [...messages, userMessage],
           stream: true,
+          options: {        
+            temperature: 0.5,
+            top_p: 0.9,
+            max_tokens: 10,
+          }
         }),
       });
 
@@ -60,15 +65,14 @@ const ChatPage = () => {
           if (chunk.trim() === "") continue;
 
           const eachChunk = JSON.parse(chunk); // cuối cùng chuyển string thành object
-
           tempCurrentResponse += eachChunk.message.content;
           setCurrentResponse(tempCurrentResponse);
 
-          console.log("chunk line by line received", eachChunk.message.content);
+          // console.log("chunk line by line received", eachChunk.message.content);
 
-          console.log("doneee", eachChunk.done);
+          // console.log("doneee", eachChunk.done);
 
-          setCurrentResponse((prev) => prev + eachChunk.message.content);
+          // setCurrentResponse((prev) => prev + eachChunk.message.content);
 
           if (eachChunk.done) {
             setIsGenerating(false);
