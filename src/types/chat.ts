@@ -8,7 +8,7 @@ export interface ChatHistory {
 }
 
 // chat mode
-export type ChatMode = 'general' | 'code' | 'web-summary';
+export type ChatMode = 'general' | 'smolagents' | 'web-summary';
 
 export interface SummarizeRequest {
     url: string;
@@ -40,4 +40,13 @@ export interface SummarizeResponse {
     model: string;
     chain_type: string;
   };
+}
+
+export interface SmolAgentRequest {
+    task: string
+}
+
+export interface SmolAgentResponse {
+    success: boolean;
+    result: string
 }

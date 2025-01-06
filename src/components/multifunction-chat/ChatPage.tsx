@@ -2,7 +2,13 @@ import { useState } from "react";
 import MultiFunctionChatHistory from "./components/ChatHistory";
 import MultiFunctionChatInput from "./components/ChatInput";
 import Header from "../header";
-import { ChatMode, Message, SummarizeResponse } from "../../types/chat";
+import {
+  ChatMode,
+  Message,
+  SmolAgentRequest,
+  SmolAgentResponse,
+  SummarizeResponse,
+} from "../../types/chat";
 
 const MultiFunctionChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -48,7 +54,6 @@ const MultiFunctionChatPage = () => {
         setCurrentResponse(tempCurrentResponse);
 
         if (eachChunk.done) {
-          setIsGenerating(false);
           setMessages((prev) => [
             ...prev,
             {
@@ -59,17 +64,17 @@ const MultiFunctionChatPage = () => {
         }
       }
     }
-  }
+  };
 
   const webSummaryChat = async (url: string) => {
     try {
       const response = await fetch("http://localhost:8000/summarize", {
         method: "POST",
         headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: url,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: url,
           chain_type: "stuff",
           model: "codellama",
         }),
@@ -80,8 +85,8 @@ const MultiFunctionChatPage = () => {
       }
 
       const data: SummarizeResponse = await response.json();
-      
-      if(data.success) {
+
+      if (data.success) {
         setMessages((prev) => [
           ...prev,
           {
@@ -92,7 +97,41 @@ const MultiFunctionChatPage = () => {
       }
     } catch (error) {
       console.error("Error while sending web-summary chat:", error);
-      setIsGenerating(false);
+    }
+  };
+
+  const smolagentChat = async (task: string) => {
+    try {
+      const response = await fetch(
+        "http://localhost:8000/api/run-task-smolagents",
+        {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          task: task,
+        }),
+      }
+    );
+
+    if (!response.body) {
+      throw new Error("Response body is null");
+    }
+
+    const data: SmolAgentResponse = await response.json();
+
+    if (data.success) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          content: data.result.toString(),
+            role: "assistant",
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error while sending smolagent chat:", error);
     }
   };
 
@@ -108,15 +147,19 @@ const MultiFunctionChatPage = () => {
     setCurrentResponse("");
 
     try {
-      if(mode === "general") {
+      if (mode === "general") {
         // gọi đến api cho general chat
         await generalChat(userMessage);
-      }
-      else if(mode === "web-summary") {
+        // setIsGenerating(false);
+      } else if (mode === "web-summary") {
         // gọi đến api cho code chat
         await webSummaryChat(content);
+        // setIsGenerating(false);
+      } else if (mode === "smolagents") {
+        await smolagentChat(content);
+        // setIsGenerating(false);
       }
-      
+      setIsGenerating(false);
     } catch (error) {
       console.error("Error [ChatPage.tsx]:", error);
       setIsGenerating(false);
