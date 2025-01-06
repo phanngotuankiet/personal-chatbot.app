@@ -37,14 +37,14 @@ const MultiFunctionChatInput: React.FC<MultiFunctionChatInputProps> = ({ onSendM
           </button>
           <button
             type="button"
-            onClick={() => onModeChange('code')}
+            onClick={() => onModeChange('smolagents')}
             className={`px-3 py-1 rounded ${
-              currentMode === 'code' 
+              currentMode === 'smolagents' 
                 ? 'bg-purple-600 text-white' 
                 : 'bg-gray-200'
             }`}
           >
-            Code
+            Smolagents
           </button>
           <button
             type="button"
@@ -68,8 +68,8 @@ const MultiFunctionChatInput: React.FC<MultiFunctionChatInputProps> = ({ onSendM
             className="flex-1 p-3 border-2 border-purple-200 rounded-lg 
                      focus:outline-none focus:ring-2 focus:ring-purple-500"
             placeholder={
-              currentMode === 'code' 
-                ? "Ask about programming..." 
+              currentMode === 'smolagents' 
+                ? "Ask about smolagents task..." 
                 : currentMode === 'web-summary' 
                 ? "Ask about web summary..."
                 : "Ask anything..."
